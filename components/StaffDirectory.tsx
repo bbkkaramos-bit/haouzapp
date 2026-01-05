@@ -88,7 +88,7 @@ const StaffDirectory: React.FC<StaffDirectoryProps> = ({ isAdminOverride = false
 
   const getTotalStaffCount = () => {
     let count = 0;
-    departments.forEach(d => d.offices.forEach((o: any) => count += (o.employees || []).length));
+    departments.forEach(d => (d.offices || []).forEach((o: any) => count += (o.employees || []).length));
     return count;
   };
 
@@ -211,10 +211,26 @@ const StaffDirectory: React.FC<StaffDirectoryProps> = ({ isAdminOverride = false
 
   const handleDelete = (type: 'DEPT' | 'OFFICE' | 'EMP', id: string) => {
     if (!confirm('هل أنت متأكد من الحذف؟')) return;
-    let updated = [...departments];
-    if (type === 'DEPT') updated = updated.filter(d => d.id !== id);
-    else if (type === 'OFFICE') updated.forEach(d => d.offices = d.offices.filter((o: any) => o.id !== id));
-    else if (type === 'EMP') updated.forEach(d => d.offices.forEach((o: any) => o.employees = o.employees.filter((e: any) => e.id !== id)));
+    
+    let updated: any[];
+    
+    if (type === 'DEPT') {
+      updated = departments.filter(d => d.id !== id);
+    } else if (type === 'OFFICE') {
+      updated = departments.map(d => ({
+        ...d,
+        offices: (d.offices || []).filter((o: any) => o.id !== id)
+      }));
+    } else { // EMP
+      updated = departments.map(d => ({
+        ...d,
+        offices: (d.offices || []).map((o: any) => ({
+          ...o,
+          employees: (o.employees || []).filter((e: any) => e.id !== id)
+        }))
+      }));
+    }
+
     saveAndSync(updated);
   };
 
